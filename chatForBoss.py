@@ -143,8 +143,8 @@ base_url = 'https://www.zhipin.com/web/geek/job?salary=406&city=101020100'
 #&industry=100206' 互金 city=101020100 上海  salary=406 薪资20-50k
 
 #执行页面查询及投递
-# for jobTitle in searchJobTitles:
-#     searchJob(jobTitle,hunterJob,pages)
+# for jobName in searchJobTitles:
+#     searchJob(jobName,hunterJob,pages)
 
 #推荐职位  推荐职位会根据保存的求职期望职位，有几个期望职位会有几个tab页，遍历所有的期望职位
 runJobRecommend(searchNum)
