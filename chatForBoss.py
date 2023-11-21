@@ -27,13 +27,13 @@ def checkFlag(checkTitle,skipList):
             break
     return checkTitleFlag
 
-def searchJob(jobtitle,cludeHunter=False,pages=6):
+def searchJob(jobName,cludeHunter=False,pages=6):
     for i in range(1,pages):   #页数，建议1-6，前5页
         print('现在开始第' + str(i) + '页的查询')
         if i > 1:
-            url_page =   base_url + '&query=' + jobtitle + '&page=' + str(i)
+            url_page =   base_url + '&query=' + jobName + '&page=' + str(i)
         else:
-            url_page = base_url + '&query=' + jobtitle
+            url_page = base_url + '&query=' + jobName
         web.get(url_page)
         time.sleep(random.randint(2,4))
         for j in range(1,31): # 每页的数据，一页有30条，可以全部遍历。
@@ -54,7 +54,7 @@ def searchJob(jobtitle,cludeHunter=False,pages=6):
             jobTitle = web.find_element_by_xpath(jobpath).text
             jobFlag = checkFlag(jobTitle,jobTitleKeyWords)
             if not jobFlag:
-                print(jobtitle + ' 不符合，忽略')
+                print(jobTitle + ' 不符合，忽略')
             companyName = web.find_element_by_xpath(companypath).text
             companyFlag = checkFlag(companyName,skipCompays)
             if companyFlag:
@@ -132,7 +132,7 @@ options = webdriver.ChromeOptions()
 options.add_experimental_option("debuggerAddress","127.0.0.1:9222")
 web = webdriver.Chrome(executable_path='D:\chrome\chromedriver.exe',chrome_options=options)
 
-skipCompays = ['某','平安','得物','华为']
+skipCompays = ['某','平安','得物']
 jobTitleKeyWords = ['测试','TEST','QA']
 # searchJobTitles = ['资深测试','自动化测试','测试专家','测试开发','软件测试','高级测试','中级测试','测试工程师']
 searchJobTitles = ['自动化测试','测试开发']   #需要搜索的职位名，遍历所有职位名，每页会有30条
