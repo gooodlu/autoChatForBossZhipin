@@ -12,4 +12,9 @@
    -- 如果是搜索职位，执行方法 searchJob(jobTitle,hunterJob,pages)
    -- 如果是执行推荐职位，执行方法 runJobRecommend(searchNum)
 4. 执行脚本
+# 关于配置：
+bossStatusList表示BOSS的状态，主要用到有:刚刚活跃,今日活跃,在线,本周活跃,3日内活跃
+skipCompays表示需要忽略的公司，比如有一些已经在流程中的，就可以不用聊了，如：平安,得物
+jobTitleKeyWords表示职位的名称中，需要包含的字符，避免误投一些不相关的职位，如：测试,TEST,QA
+searchJobTitles表示搜索的职位名称，如：测试开发,自动化测试,软件测试,测试专家
 
