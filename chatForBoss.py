@@ -1,6 +1,7 @@
 #coding=utf-8
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 import time
 import random
 import configparser
@@ -26,15 +27,17 @@ def checkHunter(pages,nums):
     return hunter
 
 def checkFlag(checkTitle,skipList):
-    checkTitleFlag = False
+    # checkTitleFlag = False
     for skipWrod in skipList:
         if skipWrod.upper() in checkTitle.upper():
-            checkTitleFlag = True
-            break
-    return checkTitleFlag
+            return True
+            # checkTitleFlag = True
+            # break
+    return False
 
 def recommendBosssStatus():
-    statusXpath = '//*[@id="wrap"]/div[2]/div[2]/div/div/div[2]/div/div[2]/div[1]/h2/span'
+    # statusXpath = '//*[@id="wrap"]/div[2]/div[2]/div/div/div[2]/div/div[2]/div[1]/h2/span'  #打开新的tab页是使用这个，目前已经不支持打开新的tab页
+    statusXpath = '//*[@id="wrap"]/div[2]/div[2]/div/div/div[2]/div/div[2]/div[1]/h2/span' #不打开新的tab
     try:
         statusText = web.find_element_by_xpath(statusXpath).text
     except NoSuchElementException:
@@ -85,15 +88,23 @@ def searchJob(jobName,cludeHunter=False,pages=6):
         print('现在开始第' + str(i) + '页的查询')
         if i > 1:
             url_page =   base_url + '&query=' + jobName + '&page=' + str(i)
+            web.get(url_page)
         else:
-            url_page = base_url + '&query=' + jobName
-        web.get(url_page)
-        time.sleep(random.randint(3,4))
+            # url_page = base_url + '&query=' + jobName
+            # web.find_element_by_xpath('//*[@id="header"]/div[1]/div[2]/ul/ul[1]/li[1]/a').click()
+            # time.sleep(5)
+            web.find_element_by_xpath('//*[@id="wrap"]/div[2]/div[1]/div[1]/div[1]/div/div[1]/input').clear()
+            time.sleep(1)
+            web.find_element_by_xpath('//*[@id="wrap"]/div[2]/div[1]/div[1]/div[1]/div/div[1]/input').send_keys(jobName)
+            time.sleep(2)
+            web.find_element_by_xpath('//*[@id="wrap"]/div[2]/div[1]/div[1]/div[1]/a').click()
+        time.sleep(random.randint(8,10))
         for j in range(1,30): # 每页的数据，一页有30条，可以全部遍历。
             print('---------------------------------')
             print('现在开始第' + str(i) + '页第' + str(j) + '条数据')
             if j % 4 == 0:
                 web.execute_script('window.scrollBy(0,500)')
+                time.sleep(2)
             if i == 1:
                 jobdiv = '1'
                 try:
@@ -106,13 +117,21 @@ def searchJob(jobName,cludeHunter=False,pages=6):
                     j) + ']/div[1]/a/div[1]/span[1]'
                 companypath = '//*[@id="wrap"]/div[2]/div[2]/div/div[1]/div[' + jobdiv + ']/ul/li[' + str(
                     j) + ']/div[1]/div/div[2]/h3/a'
+                chatPath = '//*[@id="wrap"]/div[2]/div[2]/div/div[1]/div['+ jobdiv +']/ul/li[' + str(j) + ']/div[1]/a/div[2]/a'
             else:
                 jobpath = '//*[@id="wrap"]/div[2]/div[2]/div/div[1]/div[1]/ul/li[' + str(j) + ']/div[1]/a/div[1]/span[1]'
                 companypath = '//*[@id="wrap"]/div[2]/div[2]/div/div[1]/div[1]/ul/li[' + str(j) + ']/div[1]/div/div[2]/h3/a'
+                chatPath = '//*[@id="wrap"]/div[2]/div[2]/div/div[1]/div[1]/ul/li[' + str(j) + ']/div[1]/a/div[2]/a'
             if cludeHunter:
                 hunterFlag = False
             else:
                 hunterFlag = checkHunter(i, j)
+            ActionChains(web).move_to_element(web.find_element_by_xpath(jobpath)).perform()
+            chatStat = web.find_element_by_xpath(chatPath).text
+            print('沟通选项：' + chatStat)
+            chatFlag = checkFlag(chatStat,['立即沟通'])
+            # if chatFlag:
+            #     print('未沟通')
             jobTitle = web.find_element_by_xpath(jobpath).text
             jobFlag = checkFlag(jobTitle,jobTitleKeyWords)
             if not jobFlag:
@@ -121,18 +140,18 @@ def searchJob(jobName,cludeHunter=False,pages=6):
             companyFlag = checkFlag(companyName,skipCompays)
             if companyFlag:
                 print(companyName + ' 需要忽略')
-            if  not hunterFlag  and jobFlag and not companyFlag:
-                print(companyName + ' 公司的 ' + jobTitle + ' 职位继续')
+            if  not hunterFlag  and jobFlag and not companyFlag and chatFlag:
+                print(companyName + ' 公司的 ' + jobTitle + ' 职位没有沟通过')
                 web.find_element_by_xpath(jobpath).click()
-                # time.sleep(random.randint(2, 3))
+                time.sleep(random.randint(1, 3))
                 web.switch_to.window(web.window_handles[1])
-                time.sleep(random.randint(2,3))
-                chatStatus = web.find_element_by_xpath('//*[@id="main"]/div[1]/div/div/div[1]/div[3]/div[1]/a[2]').text
-                print('沟通状态: ' + chatStatus)
+                time.sleep(random.randint(2,4))
+                # chatStatus = web.find_element_by_xpath('//*[@id="main"]/div[1]/div/div/div[1]/div[3]/div[1]/a[2]').text
+                # print('沟通状态: ' + chatStatus)
                 bossStatus = searchBossStatus()
-                if '立即沟通' in chatStatus and bossStatus:
+                if bossStatus:
                     web.find_element_by_xpath('//*[@id="main"]/div[1]/div/div/div[1]/div[3]/div[1]/a[2]').click()
-                    print('没有沟通过，已发起沟通')
+                    print('已发起沟通')
                     time.sleep(1)
                     chatResultTitle = checkChatResultTitle()
                     if chatResultTitle:
@@ -173,26 +192,29 @@ def recommendJob(searchNum):
         bossStatus = recommendBosssStatus()
         if not companyFlag and jobFlag and bossStatus:
             print(companyName + ' 公司的' + jobTitle + ' 职位可以继续')
-            herf = web.find_element_by_xpath(jobPath).get_attribute('href')
-            web.execute_script(f'window.open("{herf}","_blank");')
-            web.switch_to.window(web.window_handles[1])
-            time.sleep(2)
-            chatstatus = web.find_element_by_xpath('//*[@id="main"]/div[1]/div/div/div[1]/div[3]/div[1]/a[2]').text
+            # herf = web.find_element_by_xpath(jobPath).get_attribute('href')
+            # web.execute_script(f'window.open("{herf}","_blank");')
+            # web.switch_to.window(web.window_handles[1])
+            # time.sleep(5)
+            # chatstatus = web.find_element_by_xpath('//*[@id="main"]/div[1]/div/div/div[1]/div[3]/div[1]/a[2]').text
+            chatstatus = web.find_element_by_xpath('//*[@id="wrap"]/div[2]/div[2]/div/div/div[2]/div/div[1]/div[2]/a[2]').text
             print('沟通状态: ' + chatstatus)
             if '立即沟通' in chatstatus:
-                web.find_element_by_xpath('//*[@id="main"]/div[1]/div/div/div[1]/div[3]/div[1]/a[2]').click()
+                web.find_element_by_xpath('//*[@id="wrap"]/div[2]/div[2]/div/div/div[2]/div/div[1]/div[2]/a[2]').click()
                 print('没有沟通过，已发起沟通')
+                time.sleep(2)
+                web.find_element_by_xpath('/html/body/div[8]/div[2]/div[3]/a[1]').click()
                 time.sleep(1)
                 chatResultTitle = checkChatResultTitle()
                 if chatResultTitle:
                     print('不能沟通，退出')
                     sys.exit(0)
-            web.close()
-            web.switch_to.window(web.window_handles[0])
+            # web.close()
+            # web.switch_to.window(web.window_handles[0])
             time.sleep(2)
 
 def runJobRecommend(searchNum):
-    url = 'https://www.zhipin.com/web/geek/job-recommend?salary=406'
+    url = 'https://www.zhipin.com/web/geek/job-recommend?city=101020100&salary=406'
     web.get(url)
     time.sleep(2)
     i = 3  #tab页是从3开始编号,每个订阅职位一个,每订阅一个+1
@@ -218,9 +240,10 @@ def startChromeDebugger():
     options = webdriver.ChromeOptions()
     options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
     web = webdriver.Chrome(executable_path='D:\chrome\chromedriver.exe', chrome_options=options)   #chromedriver目录
-    web.get('https://www.zhipin.com/shanghai/?ka=header-home')
-    time.sleep(5)
-    logStatus = checkLogStatus(web)
+    # web.get('https://www.zhipin.com/shanghai/?ka=header-home')
+    # time.sleep(5)
+    # logStatus = checkLogStatus(web)
+    logStatus = True
     if not logStatus:
         sys.exit(1)
     return web
@@ -235,16 +258,18 @@ jobTitleKeyWords = cf['BOSS']['jobTitleKeyWords'].split(',')
 # searchJobTitles = ['资深测试','自动化测试','测试专家','测试开发','软件测试','高级测试','中级测试','测试工程师']
 searchJobTitles = cf['BOSS']['searchJobTitles'].split(',')   #需要搜索的职位名，遍历所有职位名，每页会有30条
 hunterJob = False   #查询职位时,True 投递猎头职位，False 忽略猎头职位
-pages = 8    # 查询职位时，查询最大页数，小于10
+pages = 6    # 查询职位时，查询最大页数，小于10
 searchNum = 20  #推荐职位，查看最大条数
 #&industry=100206' 互金 city=101020100 上海  salary=406 薪资20-50k
 
+# web.get('https://www.zhipin.com/web/geek/chat?ka=header-message')
+# time.sleep(3)
 #执行页面查询及投递
-for jobName in searchJobTitles:
-    searchJob(jobName,hunterJob,pages)
+# for jobName in searchJobTitles:
+#     searchJob(jobName,hunterJob,pages)
 
 #推荐职位  推荐职位会根据保存的求职期望职位，有几个期望职位会有几个tab页，遍历所有的期望职位
-# runJobRecommend(searchNum)
+runJobRecommend(searchNum)
 #
 #回到主页
 web.get('https://www.zhipin.com/shanghai/?ka=header-home')
