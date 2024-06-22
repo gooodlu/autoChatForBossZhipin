@@ -6,10 +6,9 @@ import time
 import random
 import configparser
 import sys
-import os
 import subprocess
-#启动chrome的debug模式，C:\Program Files (x86)\Google\Chrome\Application
-# chrome.exe --remote-debugging-port=9222 --user-data-dir="D:\tmp\autofile"
+#启动chrome的debug模式，cd C:\Program Files (x86)\Google\Chrome\Application
+# chrome.exe  --disable-background-networking --remote-debugging-port=9222 --user-data-dir="D:\tmp\autofile"
 
 
 def checkHunter(pages,nums):
@@ -178,19 +177,26 @@ def recommendJob(searchNum):
         jobTitle = web.find_element_by_xpath(jobPath).text
         print(jobTitle)
         jobFlag = checkFlag(jobTitle,jobTitleKeyWords)
+        addressPath = web.find_element_by_xpath(
+            '//*[@id="wrap"]/div[2]/div[2]/div/div/div[1]/ul/li[' + str(i) + ']/div[2]/span').text
+        addressFlag = checkFlag(addressPath, '上海')
+        print('职位所在地:' + addressPath)
+        if not addressFlag:
+            print(addressPath + '不在上海')
         companyName = ''
-        if jobFlag:
+        if jobFlag and addressFlag:
             web.find_element_by_xpath(jobPath).click()
             time.sleep(2)
             companypath = '//*[@id="wrap"]/div[2]/div[2]/div/div/div[1]/ul/li[' + str(i) + ']/div[2]/a/span'
             companyName = web.find_element_by_xpath(companypath).text
+            print('公司名：'  + companyName)
         else:
             print(jobTitle + '，职位不符合')
         companyFlag = checkFlag(companyName,skipCompays)
         if companyFlag:
             print(companyName + '需要忽略的公司')
         bossStatus = recommendBosssStatus()
-        if not companyFlag and jobFlag and bossStatus:
+        if not companyFlag and jobFlag and bossStatus and addressFlag:
             print(companyName + ' 公司的' + jobTitle + ' 职位可以继续')
             # herf = web.find_element_by_xpath(jobPath).get_attribute('href')
             # web.execute_script(f'window.open("{herf}","_blank");')
@@ -257,16 +263,15 @@ skipCompays = cf['BOSS']['skipCompays'].split(',')
 jobTitleKeyWords = cf['BOSS']['jobTitleKeyWords'].split(',')
 # searchJobTitles = ['资深测试','自动化测试','测试专家','测试开发','软件测试','高级测试','中级测试','测试工程师']
 searchJobTitles = cf['BOSS']['searchJobTitles'].split(',')   #需要搜索的职位名，遍历所有职位名，每页会有30条
-hunterJob = False   #查询职位时,True 投递猎头职位，False 忽略猎头职位
-pages = 6    # 查询职位时，查询最大页数，小于10
+hunterJob = True   #查询职位时,True 投递猎头职位，False 忽略猎头职位
+pages = 7    # 查询职位时，查询最大页数，小于10
 searchNum = 20  #推荐职位，查看最大条数
-#&industry=100206' 互金 city=101020100 上海  salary=406 薪资20-50k
+#&industry=100206' 互金 city=101020100 上海
 
-# web.get('https://www.zhipin.com/web/geek/chat?ka=header-message')
-# time.sleep(3)
+
 #执行页面查询及投递
-# for jobName in searchJobTitles:
-#     searchJob(jobName,hunterJob,pages)
+for jobName in searchJobTitles:
+    searchJob(jobName,hunterJob,pages)
 
 #推荐职位  推荐职位会根据保存的求职期望职位，有几个期望职位会有几个tab页，遍历所有的期望职位
 runJobRecommend(searchNum)
